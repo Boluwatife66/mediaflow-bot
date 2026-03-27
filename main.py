@@ -5,7 +5,6 @@ Run: python main.py
 
 import logging
 import os
-from datetime import time as dtime
 
 from telegram import BotCommand
 from telegram.ext import (
@@ -30,12 +29,11 @@ logging.basicConfig(
     format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
     level=logging.INFO,
 )
-# Quiet noisy libraries
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("httpcore").setLevel(logging.WARNING)
 logging.getLogger("yt_dlp").setLevel(logging.WARNING)
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(name)
 
 
 # ─────────────────────────────────────────────
@@ -43,12 +41,11 @@ logger = logging.getLogger(__name__)
 # ─────────────────────────────────────────────
 
 async def cleanup_job(context) -> None:
-    """Remove stale temp files every hour."""
     cleanup_old_temps(max_age_seconds=3600)
 
 
 # ─────────────────────────────────────────────
-# Bot commands menu
+# Post-init (register bot commands menu)
 # ─────────────────────────────────────────────
 
 async def post_init(application: Application) -> None:
@@ -67,46 +64,40 @@ def main() -> None:
     token = os.environ.get("BOT_TOKEN")
     if not token:
         raise RuntimeError(
-            "BOT_TOKEN environment variable is not set.\n"
-            "Get your token from @BotFather and export BOT_TOKEN=<token>"
+            "BOT_TOKEN is not set.\n"
+            "Get your token from @BotFather and run:  export BOT_TOKEN=<token>"
         )
 
-    # Bootstrap DB
     init_db()
 
-    # Build application
     app = (
         Application.builder()
         .token(token)
         .post_init(post_init)
-        .concurrent_updates(True)   # handle multiple users in parallel
+        .concurrent_updates(True)
         .build()
     )
 
-    # ── Command handlers ──────────────────────────
-    app.add_handler(CommandHandler("start", start_handler))
+    # Commands — pass_args=True so /start <referral_id> works
+    app.add_handler(CommandHandler("start", start_handler, has_args=None))
     app.add_handler(CommandHandler("help",  help_handler))
 
-    # ── Payment handlers ──────────────────────────
+    # Payments
     app.add_handler(PreCheckoutQueryHandler(precheckout_handler))
-    app.add_handler(
-        MessageHandler(filters.SUCCESSFUL_PAYMENT, successful_payment_handler)
-    )
+    app.add_handler(MessageHandler(filters.SUCCESSFUL_PAYMENT, successful_payment_handler))
 
-    # ── Inline keyboard callbacks ─────────────────
+    # Inline keyboard callbacks
     app.add_handler(CallbackQueryHandler(callback_handler))
 
-    # ── All text / URL messages ───────────────────
-    app.add_handler(
-        MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler)
-    )
+    # All text messages (including URLs and button taps)
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))
 
-    # ── Periodic cleanup job (every hour) ─────────
+    # Hourly temp-file cleanup
     app.job_queue.run_repeating(cleanup_job, interval=3600, first=3600)
 
     logger.info("🚀 MEDIAFLOW BOT is starting…")
     app.run_polling(drop_pending_updates=True)
 
 
-if __name__ == "__main__":
+if name == "main":
     main()

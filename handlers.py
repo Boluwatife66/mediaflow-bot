@@ -87,7 +87,18 @@ HELP_TEXT = (
     f"`{SUPPORTED_PLATFORMS}`\n\n"
     "*Issues?* Make sure the link is public and try again."
 )
+ADMIN_ID = 8309843074   # your Telegram user ID
 
+async def stats_handler(update, context):
+    if update.effective_user.id != ADMIN_ID:
+        return
+    stats = db.get_stats()
+    await update.message.reply_text(
+        f"📊 Stats\n"
+        f"Total users: {stats['total_users']}\n"
+        f"Premium users: {stats['premium_users']}\n"
+        f"Downloads today: {stats['downloads_today']}"
+    )
 
 def _plan_text(user: dict) -> str:
     if user["is_premium"]:

@@ -86,7 +86,6 @@ def main() -> None:
     # ── Command handlers ──────────────────────────
     app.add_handler(CommandHandler("start", start_handler))
     app.add_handler(CommandHandler("help",  help_handler))
-    app.add_handler(CommandHandler("stats", stats_handler))
 
     # ── Payment handlers ──────────────────────────
     app.add_handler(PreCheckoutQueryHandler(precheckout_handler))

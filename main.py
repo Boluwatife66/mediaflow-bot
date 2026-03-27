@@ -17,7 +17,6 @@ from telegram.ext import (
     filters,
 )
 
-app.add_handler(CommandHandler("stats", stats_handler))
 from database import init_db
 from downloader import cleanup_old_temps
 from handlers import callback_handler, help_handler, message_handler, start_handler
@@ -87,6 +86,7 @@ def main() -> None:
     # ── Command handlers ──────────────────────────
     app.add_handler(CommandHandler("start", start_handler))
     app.add_handler(CommandHandler("help",  help_handler))
+    app.add_handler(CommandHandler("stats", stats_handler))
 
     # ── Payment handlers ──────────────────────────
     app.add_handler(PreCheckoutQueryHandler(precheckout_handler))

@@ -17,6 +17,7 @@ from telegram.ext import (
     filters,
 )
 
+app.add_handler(CommandHandler("stats", stats_handler))
 from database import init_db
 from downloader import cleanup_old_temps
 from handlers import callback_handler, help_handler, message_handler, start_handler
